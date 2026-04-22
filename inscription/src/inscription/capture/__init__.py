@@ -1,2 +1,3 @@
 from .capture_models import CaptureRuntimeConfig, RecorderStatus, RecordingSessionSnapshot
+from .coordinator import CaptureCoordinator
 from .session_controller import SessionController
