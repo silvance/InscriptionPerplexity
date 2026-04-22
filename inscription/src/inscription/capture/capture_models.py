@@ -14,15 +14,25 @@ class RecorderStatus(StrEnum):
     STOPPED = "stopped"
 
 
-class CaptureRuntimeConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+from pydantic import BaseModel, ConfigDict
 
-    auto_screenshots: bool = True
-    allow_manual_screenshots: bool = True
-    capture_keyboard_milestones: bool = True
+
+from pydantic import BaseModel, ConfigDict
+
+
+from pydantic import BaseModel, ConfigDict
+
+
+class CaptureRuntimeConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     capture_window_changes: bool = True
-    suppress_mouse_move_noise: bool = True
+    capture_keyboard_milestones: bool = True
+    auto_screenshots: bool = False
     screenshot_on_left_click: bool = False
+    screenshot_on_window_change: bool = False
+    screenshot_scope_window: bool = True
+    screenshot_scope_screen: bool = False
     max_events_per_session: int = 100_000
 
 

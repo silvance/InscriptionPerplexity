@@ -1,0 +1,111 @@
+from inscription.infrastructure.keyboard_pynput import PynputKeyboardEventProvider
+
+
+class FakeKey:
+    def __init__(self, name: str):
+        self.name = name
+
+    def __eq__(self, other):
+        return getattr(other, "name", None) == self.name
+
+    def __hash__(self):
+        return hash(self.name)
+
+
+class FakeKeyCode:
+    def __init__(self, char: str | None):
+        self.char = char
+
+
+def make_provider():
+    captured = []
+    provider = PynputKeyboardEventProvider(milestone_handler=captured.append)
+    return provider, captured
+
+
+def test_maps_basic_special_keys():
+    provider, _ = make_provider()
+
+    provider._pressed_keys = set()
+    provider._is_ctrl_pressed = lambda: False
+    provider._is_alt_pressed = lambda: False
+    provider._is_shift_pressed = lambda: False
+
+    class Keys:
+        enter = FakeKey("enter")
+        esc = FakeKey("esc")
+        delete = FakeKey("delete")
+        backspace = FakeKey("backspace")
+        tab = FakeKey("tab")
+        f5 = FakeKey("f5")
+
+    import inscription.infrastructure.keyboard_pynput as mod
+    mod.keyboard.Key = Keys
+
+    assert provider._map_pressed_key_to_milestone(Keys.enter) == "enter"
+    assert provider._map_pressed_key_to_milestone(Keys.esc) == "escape"
+    assert provider._map_pressed_key_to_milestone(Keys.delete) == "delete"
+    assert provider._map_pressed_key_to_milestone(Keys.backspace) == "backspace"
+    assert provider._map_pressed_key_to_milestone(Keys.tab) == "tab"
+    assert provider._map_pressed_key_to_milestone(Keys.f5) == "f5"
+
+
+def test_maps_shift_tab_and_alt_tab():
+    provider, _ = make_provider()
+
+    class Keys:
+        tab = FakeKey("tab")
+
+    import inscription.infrastructure.keyboard_pynput as mod
+    mod.keyboard.Key = Keys
+
+    provider._is_ctrl_pressed = lambda: False
+    provider._is_alt_pressed = lambda: True
+    provider._is_shift_pressed = lambda: False
+    assert provider._map_pressed_key_to_milestone(Keys.tab) == "alt_tab"
+
+    provider._is_alt_pressed = lambda: False
+    provider._is_shift_pressed = lambda: True
+    assert provider._map_pressed_key_to_milestone(Keys.tab) == "shift_tab"
+
+
+def test_maps_ctrl_shortcuts():
+    provider, _ = make_provider()
+
+    class Keys:
+        ctrl = FakeKey("ctrl")
+        ctrl_l = FakeKey("ctrl_l")
+        ctrl_r = FakeKey("ctrl_r")
+        alt = FakeKey("alt")
+        alt_l = FakeKey("alt_l")
+        alt_r = FakeKey("alt_r")
+        shift = FakeKey("shift")
+        shift_l = FakeKey("shift_l")
+        shift_r = FakeKey("shift_r")
+
+    import inscription.infrastructure.keyboard_pynput as mod
+    mod.keyboard.Key = Keys
+    mod.keyboard.KeyCode = FakeKeyCode
+
+    provider._is_ctrl_pressed = lambda: True
+    provider._is_alt_pressed = lambda: False
+    provider._is_shift_pressed = lambda: False
+
+    assert provider._map_pressed_key_to_milestone(FakeKeyCode("s")) == "ctrl_s"
+    assert provider._map_pressed_key_to_milestone(FakeKeyCode("c")) == "ctrl_c"
+    assert provider._map_pressed_key_to_milestone(FakeKeyCode("v")) == "ctrl_v"
+    assert provider._map_pressed_key_to_milestone(FakeKeyCode("z")) == "ctrl_z"
+
+
+def test_returns_none_for_plain_typing():
+    provider, _ = make_provider()
+
+    import inscription.infrastructure.keyboard_pynput as mod
+    mod.keyboard.KeyCode = FakeKeyCode
+
+    provider._is_ctrl_pressed = lambda: False
+    provider._is_alt_pressed = lambda: False
+    provider._is_shift_pressed = lambda: False
+
+    assert provider._map_pressed_key_to_milestone(FakeKeyCode("a")) is None
+    assert provider._map_pressed_key_to_milestone(FakeKeyCode("q")) is None

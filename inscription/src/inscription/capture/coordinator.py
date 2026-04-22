@@ -24,6 +24,53 @@ class CaptureCoordinator:
     screenshot_root: str | Path = "sessions"
     _providers_started: bool = field(init=False, default=False)
 
+    def maybe_auto_screenshot_after_click(self) -> None:
+        """
+        Called by mouse providers after recording a click.
+
+        Respects runtime configuration flags so offices can decide whether
+        left-clicks should automatically generate screenshots.
+        """
+        cfg = self.controller.config
+        if not cfg.auto_screenshots or not cfg.screenshot_on_left_click:
+            return
+
+        session = self.controller.current_session
+        if session is None:
+            return
+
+        destination_dir = self._session_screenshot_dir(session_id=str(session.session_id))
+        stem = f"shot-{self.controller.snapshot.screenshot_count + 1:04d}"
+
+        if cfg.screenshot_scope_window and not cfg.screenshot_scope_screen:
+            capture_scope = CaptureScope.WINDOW
+            result = self.screenshot_provider.capture_window(
+                destination_dir=destination_dir,
+                stem=stem,
+            )
+        elif cfg.screenshot_scope_screen and not cfg.screenshot_scope_window:
+            capture_scope = CaptureScope.SCREEN
+            result = self.screenshot_provider.capture_screen(
+                destination_dir=destination_dir,
+                stem=stem,
+            )
+        else:
+            capture_scope = CaptureScope.WINDOW
+            result = self.screenshot_provider.capture_window(
+                destination_dir=destination_dir,
+                stem=stem,
+            )
+
+        self.controller.record_screenshot(
+            capture_mode=CaptureMode.AUTO,
+            capture_scope=capture_scope,
+            file_path=result.file_path,
+            file_name=result.file_name,
+            image_width=result.image_width,
+            image_height=result.image_height,
+            image_format=result.image_format,
+        )
+
     def start_capture(self, *, app_version: str, title: str | None = None) -> None:
         self.controller.start_session(app_version=app_version, title=title)
         self.mouse_provider.start()

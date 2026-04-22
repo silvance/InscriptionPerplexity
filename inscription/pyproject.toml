@@ -9,8 +9,10 @@ description = "Foundational domain models for the Inscription workflow capture a
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-  "pydantic>=2.7,<3",
-]
+  "pydantic>=2.7,<3",]
+
+[project.scripts]
+inscription-recorder = "inscription.scripts.inscription_recorder:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -14,7 +14,11 @@ src/inscription/domain/__init__.py
 src/inscription/domain/enums.py
 src/inscription/domain/models.py
 src/inscription/infrastructure/__init__.py
+src/inscription/infrastructure/keyboard_pynput.py
+src/inscription/infrastructure/mouse_pynput.py
 src/inscription/infrastructure/windows_adapters.py
+src/inscription/infrastructure/windows_screenshot.py
+src/inscription/infrastructure/windows_window_focus.py
 src/inscription/storage/__init__.py
 src/inscription/storage/repository.py
 src/inscription/storage/sqlite_store.py
